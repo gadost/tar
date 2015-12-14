@@ -1,0 +1,21 @@
+#!/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/root/bin
+PARENTPID=$PPID
+TAR_ORIG=/bin/dar
+FTP_USER=
+FTP_PASS=
+FTP_SERV=
+PIGZ=/usr/bin/pigz
+CURL=/usr/local/bin/curl
+BASENAME=`basename $2`
+DIRNAME=`echo $2 |sed "s#\/# #g" | awk '{a=NF-2;print $a}'`
+DAYOFWEEK=`date +%u`
+PARENTPARENT=$(awk '{print $4}' /proc/$PARENTPID/stat)
+if [ `ps aux | grep " $PARENTPARENT " | head -n 1 | awk '{print $NF}'` = "/usr/local/directadmin/dataskq" -a "$(whoami)" = 'admin' ]; then
+echo "good" >> /tmp/tar.log
+shift
+shift
+$TAR_ORIG cf - $@ | $PIGZ -c2 |$CURL --ftp-create-dirs -T - "ftp://$FTP_USER:$FTP_PASS@$FTP_SERV/$DIRNAME/$DAYOFWEEK/$BASENAME"
+else
+	exec $TAR_ORIG $@
+fi
